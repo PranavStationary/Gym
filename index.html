@@ -1,538 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progress</title>
-    <style>
-        :root {
-            --bg: #000000;
-            --surface: rgba(255, 255, 255, 0.03);
-            --surface-hover: rgba(255, 255, 255, 0.06);
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #f5f5f7;
-            --text-muted: #86868b;
-            --accent: #0a84ff;
-            --radius: 24px;
-            --ease: cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* Premium Film Grain Noise Overlay */
-        .noise-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
-        /* Ambient Lighting */
-        .ambient-glow {
-            position: fixed;
-            top: -30vh;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100vw;
-            height: 80vh;
-            background: radial-gradient(circle at center, rgba(10, 132, 255, 0.15) 0%, rgba(191, 90, 242, 0.05) 30%, transparent 70%);
-            filter: blur(80px);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .container {
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 120px 24px 160px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Hero */
-        header {
-            text-align: center;
-            margin-bottom: 80px;
-            opacity: 0;
-            transform: translateY(40px) scale(0.98);
-            animation: revealHero 1.2s var(--ease) forwards;
-        }
-
-        @keyframes revealHero {
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        h1 {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 700;
-            letter-spacing: -0.05em;
-            line-height: 1;
-            margin-bottom: 24px;
-            background: linear-gradient(180deg, #ffffff 0%, #6e6e73 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1.25rem;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-            margin-bottom: 48px;
-        }
-
-        .stats {
-            display: inline-flex;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(40px);
-            padding: 16px 32px;
-            border-radius: 100px;
-            gap: 48px;
-        }
-
-        .stat-item { text-align: center; }
-        .stat-number { font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; }
-        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
-
-        /* Input Card */
-        .input-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 8px;
-            margin-bottom: 48px;
-            backdrop-filter: blur(40px);
-            transition: border-color 0.4s var(--ease), background 0.4s var(--ease);
-            opacity: 0;
-            transform: translateY(20px);
-            animation: revealUp 1s 0.2s var(--ease) forwards;
-        }
-
-        @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
-
-        .input-card:focus-within {
-            border-color: rgba(10, 132, 255, 0.5);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .textarea-wrapper { padding: 20px 24px 8px; }
-        textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 1.25rem;
-            font-weight: 400;
-            resize: none;
-            min-height: 40px;
-            letter-spacing: -0.01em;
-        }
-        textarea::placeholder { color: #515156; }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 12px 12px 24px;
-        }
-
-        .category-pills { display: flex; gap: 8px; }
-
-        .pill {
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            background: rgba(255,255,255,0.04);
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s var(--ease);
-            user-select: none;
-        }
-        .pill:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-        .pill.active { color: var(--text); background: var(--text); color: #000; }
-
-        .log-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 100px;
-            font-family: inherit;
-            font-weight: 500;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: transform 0.2s var(--ease), opacity 0.2s;
-        }
-        .log-btn:hover { opacity: 0.9; }
-        .log-btn:active { transform: scale(0.95); }
-
-        /* Progress Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .card {
-            position: relative;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
-            backdrop-filter: blur(40px);
-            transition: transform 0.4s var(--ease), border-color 0.4s var(--ease);
-            opacity: 0;
-            transform: translateY(20px) scale(0.98);
-            animation: revealUp 0.6s var(--ease) forwards;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            border-color: rgba(255,255,255,0.16);
-            transform: translateY(-4px) scale(1.01);
-        }
-
-        /* Mouse Tracking Spotlight */
-        .card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
-            opacity: 0;
-            transition: opacity 0.4s var(--ease);
-            pointer-events: none;
-        }
-        .card:hover::before { opacity: 1; }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .tag {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .tag.career { background: rgba(10, 132, 255, 0.1); color: #0a84ff; }
-        .tag.learning { background: rgba(191, 90, 242, 0.1); color: #bf5af2; }
-        .tag.fitness { background: rgba(48, 209, 88, 0.1); color: #30d158; }
-        .tag.life { background: rgba(255, 159, 10, 0.1); color: #ff9f0a; }
-        .tag.mindset { background: rgba(255, 55, 95, 0.1); color: #ff375f; }
-
-        .date { font-size: 0.75rem; color: #515156; }
-
-        .content {
-            font-size: 1.05rem;
-            line-height: 1.5;
-            color: #e5e5ea;
-            position: relative;
-            z-index: 2;
-            letter-spacing: -0.01em;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: rgba(255,255,255,0.05);
-            border: none;
-            color: #86868b;
-            width: 24px; height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            opacity: 0;
-            transition: all 0.3s var(--ease);
-            z-index: 3;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem;
-        }
-        .card:hover .delete-btn { opacity: 1; }
-        .delete-btn:hover { background: #ff375f; color: #fff; }
-
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: #515156;
-            padding: 80px 40px;
-            border: 1px dashed var(--border);
-            border-radius: var(--radius);
-            font-size: 1.1rem;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 64px;
-            text-align: center;
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 10px 20px;
-            border-radius: 100px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            transition: all 0.3s var(--ease);
-        }
-        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: var(--surface); }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="LifeOS — your personal life improvement dashboard. Track goals, build habits, journal your journey." />
+  <title>LifeOS · Personal Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
-    <div class="noise-overlay"></div>
-    <div class="ambient-glow"></div>
-
-    <div class="container">
-        <header>
-            <h1>Life Progress</h1>
-            <p class="subtitle">A private ledger of your evolution.</p>
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-number" id="total-count">0</div>
-                    <div class="stat-label">Total Logs</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="streak-count">0</div>
-                    <div class="stat-label">Streak (Days)</div>
-                </div>
-            </div>
-        </header>
-
-        <div class="input-card">
-            <div class="textarea-wrapper">
-                <textarea id="input" placeholder="What did you accomplish today?" rows="1"></textarea>
-            </div>
-            <div class="controls">
-                <div class="category-pills">
-                    <div class="pill active" data-cat="career">Career</div>
-                    <div class="pill" data-cat="learning">Learning</div>
-                    <div class="pill" data-cat="fitness">Fitness</div>
-                    <div class="pill" data-cat="life">Life</div>
-                    <div class="pill" data-cat="mindset">Mindset</div>
-                </div>
-                <button class="log-btn" id="log-btn">Log Progress</button>
-            </div>
-        </div>
-
-        <div class="grid" id="grid"></div>
-
-        <div class="footer">
-            <button class="btn-ghost" id="export-btn">Export Data</button>
-            <button class="btn-ghost" id="import-btn">Import Data</button>
-            <input type="file" id="file-input" accept=".json" style="display: none;">
-        </div>
+  <div class="app">
+    <!-- Ambient background orbs -->
+    <div class="bg-orbs" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
     </div>
 
-    <script>
-        // State Management
-        const STORAGE_KEY = 'life_progress_premium_v1';
-        let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        let currentCategory = 'career';
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20" opacity=".3"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">LifeOS</span>
+          <span class="brand-sub">v1.0</span>
+        </div>
+      </div>
 
-        // DOM
-        const grid = document.getElementById('grid');
-        const input = document.getElementById('input');
-        const logBtn = document.getElementById('log-btn');
-        const totalCount = document.getElementById('total-count');
-        const streakCount = document.getElementById('streak-count');
-        const pills = document.querySelectorAll('.pill');
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="goals">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span>Goals</span>
+        </button>
+        <button class="nav-item" data-view="habits">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Habits</span>
+        </button>
+        <button class="nav-item" data-view="journal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          <span>Journal</span>
+        </button>
+        <button class="nav-item" data-view="stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Insights</span>
+        </button>
+      </nav>
 
-        // Auto-resizing Textarea
-        input.addEventListener('input', () => {
-            input.style.height = 'auto';
-            input.style.height = input.scrollHeight + 'px';
-        });
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="user-card">
+          <div class="avatar" id="avatar"></div>
+          <div class="user-meta">
+            <span class="user-name" id="userName">You</span>
+            <span class="user-streak" id="userStreak">0 day streak</span>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-        // Category Selection
-        pills.forEach(pill => {
-            pill.addEventListener('click', () => {
-                pills.forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                currentCategory = pill.dataset.cat;
-            });
-        });
+    <!-- Main content -->
+    <main class="main">
+      <!-- Top bar -->
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="greeting">
+          <h1 id="greetingTitle">Good morning</h1>
+          <p id="greetingSub" class="greeting-sub">Let's make today count.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-ghost" id="quickAddBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Quick Add</span>
+          </button>
+        </div>
+      </header>
 
-        // Calculate Streak (consecutive days with logs)
-        function calculateStreak() {
-            if (data.length === 0) return 0;
-            
-            const uniqueDays = [...new Set(data.map(item => new Date(item.id).toDateString()))];
-            let streak = 0;
-            let checkDate = new Date();
+      <!-- Views -->
+      <div class="views" id="views">
+        <!-- Dashboard -->
+        <section class="view view-dashboard active" data-view="dashboard">
+          <div class="stat-grid">
+            <div class="stat-card glass" data-stat="goals">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <div class="stat-meta">
+                <span class="stat-label">Active Goals</span>
+                <span class="stat-value" id="statGoals">0</span>
+                <span class="stat-trend" id="statGoalsTrend">— add your first goal</span>
+              </div>
+            </div>
+            <div class="stat-card glass" data-stat="habits">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div class="stat-meta">
+                <span class="stat-label">Today's Habits</span>
+                <span class="stat-value" id="statHabits">0/0</span>
+                <span class="stat-trend" id="statHabitsTrend">No habits yet</span>
+              </div>
+            </div>
+            <div class="stat-card glass" data-stat="journal">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="stat-meta">
+                <span class="stat-label">Journal Entries</span>
+                <span class="stat-value" id="statJournal">0</span>
+                <span class="stat-trend" id="statJournalTrend">Write your story</span>
+              </div>
+            </div>
+            <div class="stat-card glass" data-stat="streak">
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              </div>
+              <div class="stat-meta">
+                <span class="stat-label">Current Streak</span>
+                <span class="stat-value" id="statStreak">0</span>
+                <span class="stat-trend" id="statStreakTrend">days strong</span>
+              </div>
+            </div>
+          </div>
 
-            // If no log today, start checking from yesterday
-            if (!uniqueDays.includes(checkDate.toDateString())) {
-                checkDate.setDate(checkDate.getDate() - 1);
-            }
+          <div class="dash-grid">
+            <div class="panel glass dash-goals">
+              <div class="panel-head">
+                <h2>Focus Goals</h2>
+                <button class="link-btn" data-jump="goals">View all →</button>
+              </div>
+              <div class="focus-list" id="focusGoals">
+                <div class="empty">No goals yet — head to the Goals tab to create one.</div>
+              </div>
+            </div>
 
-            while (uniqueDays.includes(checkDate.toDateString())) {
-                streak++;
-                checkDate.setDate(checkDate.getDate() - 1);
-            }
-            return streak;
-        }
+            <div class="panel glass dash-habits">
+              <div class="panel-head">
+                <h2>Today's Habits</h2>
+                <button class="link-btn" data-jump="habits">Manage →</button>
+              </div>
+              <div class="habit-today-list" id="todayHabits">
+                <div class="empty">No habits tracked yet.</div>
+              </div>
+            </div>
 
-        function save() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            render();
-        }
+            <div class="panel glass dash-journal">
+              <div class="panel-head">
+                <h2>Recent Reflections</h2>
+                <button class="link-btn" data-jump="journal">Open journal →</button>
+              </div>
+              <div class="recent-journal" id="recentJournal">
+                <div class="empty">Your latest thoughts will appear here.</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        function formatDate(ts) {
-            const d = new Date(ts);
-            const now = new Date();
-            const diff = (now - d) / (1000 * 60 * 60 * 24);
-            
-            if (diff < 1 && now.getDate() === d.getDate()) return "Today";
-            if (diff < 2) return "Yesterday";
-            
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
+        <!-- Goals -->
+        <section class="view view-goals" data-view="goals">
+          <div class="view-head">
+            <div>
+              <h2>Your Goals</h2>
+              <p class="view-sub">Define where you're heading. Track progress. Celebrate wins.</p>
+            </div>
+            <button class="btn-primary" id="addGoalBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>New Goal</span>
+            </button>
+          </div>
+          <div class="goal-grid" id="goalGrid">
+            <div class="empty-state glass">
+              <div class="empty-icon">🎯</div>
+              <h3>No goals yet</h3>
+              <p>What's the one thing that, if achieved, would make this year transformative?</p>
+              <button class="btn-primary" data-action="add-goal">Create your first goal</button>
+            </div>
+          </div>
+        </section>
 
-        function render() {
-            totalCount.textContent = data.length;
-            streakCount.textContent = calculateStreak();
+        <!-- Habits -->
+        <section class="view view-habits" data-view="habits">
+          <div class="view-head">
+            <div>
+              <h2>Habit Tracker</h2>
+              <p class="view-sub">Small steps, daily. Tap a day to mark it done.</p>
+            </div>
+            <button class="btn-primary" id="addHabitBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>New Habit</span>
+            </button>
+          </div>
+          <div class="habit-list" id="habitList">
+            <div class="empty-state glass">
+              <div class="empty-icon">🌱</div>
+              <h3>Plant your first habit</h3>
+              <p>Atomic habits compound. Start small — 5 minutes a day beats nothing.</p>
+              <button class="btn-primary" data-action="add-habit">Add a habit</button>
+            </div>
+          </div>
+        </section>
 
-            if (data.length === 0) {
-                grid.innerHTML = '<div class="empty-state">Your journey starts now.<br>Add your first milestone above.</div>';
-                return;
-            }
-
-            // Sort newest first
-            const sorted = [...data].sort((a, b) => b.id - a.id);
-            
-            grid.innerHTML = sorted.map((item, i) => `
-                <div class="card" style="animation-delay: ${i * 0.05}s" data-id="${item.id}">
-                    <button class="delete-btn" data-del="${item.id}">✕</button>
-                    <div class="card-header">
-                        <span class="tag ${item.category}">${item.category}</span>
-                        <span class="date">${formatDate(item.id)}</span>
-                    </div>
-                    <div class="content">${item.text}</div>
+        <!-- Journal -->
+        <section class="view view-journal" data-view="journal">
+          <div class="view-head">
+            <div>
+              <h2>Journal</h2>
+              <p class="view-sub">Capture the thoughts that matter. Future-you will thank you.</p>
+            </div>
+          </div>
+          <div class="journal-layout">
+            <div class="panel glass journal-editor">
+              <div class="journal-meta">
+                <input type="text" id="journalTitle" placeholder="Today's title…" class="journal-title-input" />
+                <div class="mood-picker" id="moodPicker">
+                  <span class="mood-label">Mood:</span>
+                  <button class="mood-btn" data-mood="5" title Amazing>🌅</button>
+                  <button class="mood-btn" data-mood="4" title="Good">😊</button>
+                  <button class="mood-btn" data-mood="3" title="Okay">😐</button>
+                  <button class="mood-btn" data-mood="2" title="Low">🌧️</button>
+                  <button class="mood-btn" data-mood="1" title="Rough">⛈️</button>
                 </div>
-            `).join('');
+              </div>
+              <textarea id="journalBody" class="journal-body-input" placeholder="What's on your mind today? Write freely — this is your space."></textarea>
+              <div class="journal-actions">
+                <span class="word-count" id="wordCount">0 words</span>
+                <button class="btn-primary" id="saveJournalBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Entry</span>
+                </button>
+              </div>
+            </div>
+            <div class="panel glass journal-list-panel">
+              <div class="panel-head">
+                <h2>Past Entries</h2>
+                <span class="entry-count" id="entryCount">0</span>
+              </div>
+              <div class="journal-list" id="journalList">
+                <div class="empty">No entries yet. Write your first one →</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-            // Add Spotlight Listeners
-            grid.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('mousemove', e => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    card.style.setProperty('--mouse-x', `${x}px`);
-                    card.style.setProperty('--mouse-y', `${y}px`);
-                });
-            });
+        <!-- Insights -->
+        <section class="view view-stats" data-view="stats">
+          <div class="view-head">
+            <div>
+              <h2>Insights</h2>
+              <p class="view-sub">Patterns across your journey. The data tells a story.</p>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="panel glass stat-panel">
+              <div class="panel-head"><h2>Goal Progress</h2></div>
+              <div class="chart-wrap" id="goalProgressChart"></div>
+            </div>
+            <div class="panel glass stat-panel">
+              <div class="panel-head"><h2>Mood Trend (30 days)</h2></div>
+              <div class="chart-wrap" id="moodChart"></div>
+            </div>
+            <div class="panel glass stat-panel wide">
+              <div class="panel-head"><h2>Habit Heatmap (last 12 weeks)</h2></div>
+              <div class="heatmap-wrap" id="habitHeatmap"></div>
+            </div>
+            <div class="panel glass stat-panel">
+              <div class="panel-head"><h2>Weekly Summary</h2></div>
+              <div class="weekly-summary" id="weeklySummary"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-            // Delete Listeners
-            grid.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = parseInt(btn.dataset.del);
-                    const card = btn.closest('.card');
-                    card.style.transition = 'all 0.4s var(--ease)';
-                    card.style.transform = 'scale(0.9)';
-                    card.style.opacity = '0';
-                    setTimeout(() => {
-                        data = data.filter(d => d.id !== id);
-                        save();
-                    }, 400);
-                });
-            });
-        }
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal glass" id="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="modal-close" id="modalClose" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
 
-        function addLog() {
-            const text = input.value.trim();
-            if (!text) {
-                input.style.transition = 'transform 0.1s';
-                input.style.transform = 'translateX(10px)';
-                setTimeout(() => input.style.transform = 'translateX(-10px)', 100);
-                setTimeout(() => input.style.transform = 'translateX(0)', 200);
-                return;
-            }
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
 
-            data.push({
-                id: Date.now(),
-                text: text,
-                category: currentCategory
-            });
-            
-            input.value = '';
-            input.style.height = 'auto';
-            save();
-        }
-
-        logBtn.addEventListener('click', addLog);
-        input.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') addLog();
-        });
-
-        // Backup System
-        document.getElementById('export-btn').addEventListener('click', () => {
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `progress-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-        });
-
-        document.getElementById('import-btn').addEventListener('click', () => {
-            document.getElementById('file-input').click();
-        });
-
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    data = [...data, ...imported];
-                    save();
-                } catch (err) { alert("Invalid backup file"); }
-            };
-            reader.readAsText(e.target.files[0]);
-        });
-
-        // Initial Render
-        render();
-    </script>
+  <script src="script.js"></script>
 </body>
 </html>
